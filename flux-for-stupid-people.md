@@ -1,173 +1,191 @@
 #写给初学者的flux入门
 
-“放弃吧！”
-在我挣扎着学习Flux时，最希望听到某个人这样对我说。它一点都不简单直接，缺少文档，还有很多需要完善的地方。
+“放弃吧！”  
+在我挣扎着学习Flux时，最希望听到某个人这样对我说。它一点都不简单直接，缺少文档，还有很多需要完善的地方。  
 
-这篇文章就是献给那些和我一样不怎么聪明的家伙，作为学习ReactJS后的补充。
+这篇文章就是献给那些和我一样不怎么聪明的家伙，作为学习ReactJS后的补充。  
 
 *我该使用Flux吗？
 
-如果你的应用需要处理动态的数据，那么你可能需要。
-If your application deals with dynamic data then yes, you should probably use Flux.
-如果只是一些静态的页面也没有状态，并且你不需要保存或者更新数据，那就离Flux远点，它不会给你更多的好处。
-If your application is just static views that don't share state, and you never save nor update data, then no, Flux won't give you any benefit.
-*为什么需要Flux
-Why Flux?
+如果你的应用需要处理动态的数据，那么你可能需要。  
 
-坦白的说，Flux有点复杂。那为什么要引入Flux增加复杂性呢？
-Humor me for a moment, because Flux is a moderately complicated idea. Why should you add complexity?
+如果只是一些静态的页面也没有状态，并且你不需要保存或者更新数据，那就离Flux远点，它不会给你更多的好处。  
 
-90的iOS应用的数据是用表格形式呈现的。iOS的工具箱里有很多好用的视图和数据模型，帮助开发者更轻松的开发。
-90% of iOS applications are data in a table view. The iOS toolkit has well defined views and data models that make application development easy.
+*为什么需要Flux  
 
-但是对于前端（HTML,Javascript,CSS）,我们并没有这些东西。相反我们面临一个很严重的问题：没有人知道如何构建一个前端应用。
-这行我干了很多年了，从来没看到过“最佳实践”。各种“库”倒是学了不少。jQuery？Angular？Backbone？现实的问题是，数据流仍然困扰着大多数人。
-On the Front End™ (HTML, Javascript, CSS), we don't even have that. Instead we have a big problem: No one knows how to structure a Front End™ application. I've worked in this industry for years, 
-and "best practices" are never taught. Instead, "libraries" are taught. jQuery? Angular? Backbone? The real problem, data flow, still eludes us.
 
-What is Flux?
+坦白的说，Flux有点复杂。那为什么要引入Flux增加复杂性呢？  
 
-Flux is a word made up to describe "one way" data flow with very specific events and listeners. There's no Flux library, but you'll need the Flux Dispatcher, and any Javascript event library.
 
-The official documentation is written like someone's stream of conciousness, and is a bad place to start. Once you get Flux in your head, though, it can help fill in the gaps.
+90的iOS应用的数据是用表格形式呈现的。iOS的工具箱里有很多好用的视图和数据模型，帮助开发者更轻松的开发。  
 
-Don't try to compare Flux to Model View Controller (MVC) architecture. Drawing parallels will only be confusing.
 
-Let's dive in! I will explain concepts in order and build on them one at a time.
+但是对于前端（HTML,Javascript,CSS）,我们并没有这些东西。相反我们面临一个很严重的问题：没有人知道如何构建一个前端应用。  
+这行我干了很多年了，从来没看到过“最佳实践”。各种“库”倒是学了不少。jQuery？Angular？Backbone？现实的问题是，数据流仍然困扰着大多数人。  
 
-1. Your Views "Dispatch" "Actions"
+Flux是个什么东东？
 
-A "dispatcher" is essentially an event system. It broadcasts events and registers callbacks. There is only ever one, global dispatcher. You should use the Facebook Dispatcher Library. It's very easy to instantiate:
 
-var AppDispatcher = new Dispatcher();  
-Let's say your application has a "new" button that adds an item to a list.
+“Flux”用来描述绑定特定事件(events)和监听器(listeners)的单向数据流。没有特定的Flus库，但是你需要一个Flux Dispatcher和任何一个Javascript的事件库。
 
-<button onClick={ this.createNewItem }>New Item</button>  
-What happens on click? Your view dispatches a very specific event, with the event name and new item data:
+官方的文档属于“意识流”派的风格，不适合新手。如果你已经对Flux足够了解，它将帮助你补上某些确实的东西。
 
-createNewItem: function( evt ) {
+不要拿Flux和MVC做比较。   
+不要拿Flux和MVC做比较。  
+不要拿Flux和MVC做比较。  
+重要的事情要说三遍。
+那两个不相干的东西做比较，会使你更困惑。    
 
-    AppDispatcher.dispatch({
-        eventName: 'new-item',
-        newItem: { name: 'Marco' } // example data
+下面是我们开工！下面我会一步步的讲解、演示那些概念。  
+
+1.视图(Views) Dispatch 动作(Actions)    
+
+Dispatcher 本质上是一个基于事件的系统。它负责分发事件和注册事件的处理函数。只有一个全局的Dispatcher。推荐使用Facebook提供的Dispatcher库，它很方便使用:  
+
+    var AppDispatcher = new Dispatcher();
+    
+假设你的应用有一个 new 按钮去给一个列表增加一个新的项目。   
+
+    <button onClick={ this.createNewItem }>New Item</button>  
+    
+当你点击完后会发生什么？首先，视图会发出一个特殊的事件，其中包括事件的名称以及相关数据：    
+
+    createNewItem: function( evt ) {
+
+        AppDispatcher.dispatch({
+          eventName: 'new-item',
+            newItem: { name: 'Marco' } // example data
+        });
+    }
+    
+2.“Store”会响应一个被分发的的事件   
+
+像Flux一样，这个也是Facebook自己造的一个词。对于我们的应用来讲，我们需要一个描述逻辑和数据的地方，这就是 “Store”。现在我们整一个 ListStore。
+
+Store 是单例对象，这就意味着你不应该通过new来声明它。ListStore是一个全局的对象：    
+
+    // Global object representing list data and logic
+    var ListStore = {
+
+        // Actual collection of model data
+        items: [],
+
+        // Accessor method we'll use later
+        getAll: function() {
+         return this.items;
+        }
+
+    };
+    
+这个Store需要相应事件，就像下面一样去注册一个需要响应的事件：   
+
+    var ListStore = …
+
+    AppDispatcher.register( function( payload ) {
+
+        switch( payload.eventName ) {
+
+            case 'new-item':
+
+                // We get to mutate data!
+                ListStore.items.push( payload.newItem );
+                break;
+
+        }
+
+        return true; // Needed for Flux promise resolution
+
     });
 
-}
-2. Your "Store" Responds to Dispatched Events
+这是Flux处理事件的典型方式：每个payload都包含事件的名称和数据；而后通过一个switch语句去决定执行那个动作。
 
-Like Flux, "store" is just a word Facebook made up. For our application, we need a specific collection of logic and data for the list. This describes our store. We'll call it a ListStore.
 
-A store is a singleton, meaning you probably shouldn't declare it with new. The ListStore is a global object:
+ 关键点: Store不是Model，Store包含一个Model
 
-// Global object representing list data and logic
-var ListStore = {
+ 关键点: Store是唯一知道如何更新组件数据的。这是Flux中最重要的一点。分发的事件对如何添加和删除项。
 
-    // Actual collection of model data
-    items: [],
+例如，如果应用的其它地方需要跟踪一些图片和相关的metadata，你就需要新建一个Store，比如叫ImageStore。一个Store代表了应用中一个独立的概念。
+如果你的应用很大，它们可能对你来说显而易见。但是如果只是一个小应用，或许你只需要一个Store就够了。
 
-    // Accessor method we'll use later
-    getAll: function() {
-        return this.items;
-    }
+只有Store才允许向Dispatcher注册回调！   
+只有Store才允许向Dispatcher注册回调！   
+只有Store才允许向Dispatcher注册回调！   
+视图不应该去调用 AppDispatcher.register。Dispatcher应该只用来将事件从View分发到Store。视图可能会相应多个事件。
 
-};
-Your store then responds to the dispatched event:
 
-var ListStore = …
+3.从Store触发Change事件 
 
-AppDispatcher.register( function( payload ) {
+好了，终于到重点了！数据已经完全改变，我们需要告诉所有人。
 
-    switch( payload.eventName ) {
+现在你的Store触发需要触发一个事件，但是我们并没有使用dispatcher。是不是很困惑？但Flux就是这么干的。现在我们需要赋予Store触发事件的能力。如果你使用MicroEvent，就可以像这样: 
 
-        case 'new-item':
+    MicroEvent.mixin( ListStore );
+    
+接下来我们需要触发这个change事件：  
 
-            // We get to mutate data!
-            ListStore.items.push( payload.newItem );
-            break;
+    case 'new-item':
 
-    }
+        ListStore.items.push( payload.newItem );
 
-    return true; // Needed for Flux promise resolution
+        // Tell the world we changed!
+        ListStore.trigger( 'change' );
 
-}); 
-This is traditionally how Flux does dispatch callbacks. Each payload contains an event name and data. A switch statement decides specific actions.
+        break;
 
- Key Concept: A store is not a model. A store contains models.
+ 关键点：我们并没有将最新的数据添加到事件中。因为视图只关心是不是有东西发生改变。想知道为什么吗？继续跟踪数据吧^_^。
 
- Key concept: A store is the only thing in your application that knows how to update data. This is the most important part of Flux. The event we dispatched doesn't know how to add or remove items.
+4.视图去响应(Respond) Change事件    
 
-If, for example, a different part of your application needed to keep track of some images and their metadata, you'd make another store, and call it ImageStore. A store represents a single "domain" of your application. If your application is large, the domains will probably be obvious to you already. If your application is small, you probably only need one store.
+现在我们需要显示这个列表。视图此时会整体重新渲染(re-render)。对，你没看错，就是这样！   
 
-Only your stores are allowed to register dispatcher callbacks! Your views should never call AppDispatcher.register. The dispatcher only exists to send messages from views to stores. Your views will respond to a different kind of event.
+首先，我们需要在ListStore中，设置监听component首次加载的事件，就是说component刚被创建时：   
 
-3. Your Store Emits a "Change" Event
+    componentDidMount: function() {
+        ListStore.bind( 'change', this.listChanged );
+    },
+    
+简单起见，我们只调用 foreUpdate,此时会触发重绘。
 
-We're almost there! Now that your data is definitely changed, we need to tell the world.
+    listChanged: function() {
+        // Since the list changed, trigger a new render.
+        this.forceUpdate();
+    },
+    
+别忘了在component被删除时移除事件的监听器： 
 
-Your store emits an event, but not using the dispatcher. This is confusing, but it's the Flux way. Let's give our store the ability to trigger events. If you're using MicroEvent.js this is easy:
+    componentWillUnmount: function() {
+        ListStore.unbind( 'change', this.listChanged );
+    },
 
-MicroEvent.mixin( ListStore );  
-Then let's trigger our change event:
-
-        case 'new-item':
-
-            ListStore.items.push( payload.newItem );
-
-            // Tell the world we changed!
-            ListStore.trigger( 'change' );
-
-            break;
- Key Concept: We don't pass the newest item when we trigger. Our views only care that something changed. Let's keep following the data to understand why.
-
-4. Your View Responds to the "Change" Event
-
-Now we need to display the list. Our view will completely re-render when the list changes. That's not a typo.
-
-First, let's listen for the change event from our ListStore when the component "mounts," which is when the component is first created:
-
-componentDidMount: function() {  
-    ListStore.bind( 'change', this.listChanged );
-},
-For simplicity's sake, we'll just call forceUpdate, which triggers a re-render.
-
-listChanged: function() {  
-    // Since the list changed, trigger a new render.
-    this.forceUpdate();
-},
-Don't forget to clean up your event listeners when your component "unmounts," which is when it goes back to hell:
-
-componentWillUnmount: function() {  
-    ListStore.unbind( 'change', this.listChanged );
-},
 Now what? Let's look at our render function, which I've purposely saved for last.
 
-render: function() {
-
-    // Remember, ListStore is global!
-    // There's no need to pass it around
-    var items = ListStore.getAll();
-
-    // Build list items markup by looping
-    // over the entire list
-    var itemHtml = items.map( function( listItem ) {
-
-        // "key" is important, should be a unique
-        // identifier for each list item
-        return <li key={ listItem.id }>
-            { listItem.name }
-          </li>;
-
-    });
-
-    return <div>
-        <ul>
-            { itemHtml }
-        </ul>
-
-        <button onClick={ this.createNewItem }>New Item</button>
-
-    </div>;
-}
+    render: function() {
+    
+        // Remember, ListStore is global!
+        // There's no need to pass it around
+        var items = ListStore.getAll();
+    
+        // Build list items markup by looping
+        // over the entire list
+        var itemHtml = items.map( function( listItem ) {
+    
+            // "key" is important, should be a unique
+            // identifier for each list item
+            return <li key={ listItem.id }>
+                { listItem.name }
+              </li>;
+    
+        });
+    
+        return <div>
+            <ul>
+                { itemHtml }
+            </ul>
+    
+            <button onClick={ this.createNewItem }>New Item</button>
+    
+        </div>;
+    }
 We've come full circle. When you add a new item, the view dispatches an action, the store responds to that action, the store updates, the store triggers a change event, and the view responds to the change event by re-rendering.
 
 But here's a problem: we're re-rendering the entire view every time the list changes! Isn't that horribly inefficient?!
@@ -182,22 +200,22 @@ One More Thing: What The Hell Is An "Action Creator"?
 
 Remember, when we click our button, we dispatch a specific event:
 
-AppDispatcher.dispatch({  
-    eventName: 'new-item',
-    newItem: { name: 'Samantha' }
-});
+    AppDispatcher.dispatch({
+        eventName: 'new-item',
+        newItem: { name: 'Samantha' }
+    });
 Well, this can get pretty repetitious to type if many of your views need to trigger this event. Plus, all of your views need to know the specific object format. That's lame. Flux suggests an abstraction, called action creators, which just abstracts the above into a function.
 
-ListActions = {
-
-    add: function( item ) {
-        AppDispatcher.dispatch({
-            eventName: 'new-item',
-            newItem: item
-        });
-    }
-
-};
+    ListActions = {
+    
+        add: function( item ) {
+            AppDispatcher.dispatch({
+                eventName: 'new-item',
+                newItem: item
+            });
+        }
+    
+    };
 Now your view can just call ListActions.add({ name: '...' }); and not have to worry about dispatched object syntax.
 
 Unanswered Questions
